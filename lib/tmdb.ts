@@ -6,8 +6,8 @@ export function getTmdbImageUrl(path: string | null, size: "w92" | "w185" | "w34
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 }
 
-async function fetchTmdb<T>(path: string): Promise<T> {
-  const key = process.env.TMDB_API_KEY;
+async function fetchTmdb<T>(path: string, apiKey?: string): Promise<T> {
+  const key = apiKey ?? process.env.TMDB_API_KEY;
   if (!key) {
     throw new Error("TMDB_API_KEY is not set");
   }
@@ -48,11 +48,11 @@ export interface TmdbSearchResult {
   }>;
 }
 
-export async function searchTmdb(query: string): Promise<TmdbSearchResult> {
+export async function searchTmdb(query: string, apiKey?: string): Promise<TmdbSearchResult> {
   const encoded = encodeURIComponent(query);
   const res = await Promise.all([
-    fetchTmdb<TmdbSearchResult>(`/search/movie?query=${encoded}`),
-    fetchTmdb<TmdbSearchResult>(`/search/tv?query=${encoded}`),
+    fetchTmdb<TmdbSearchResult>(`/search/movie?query=${encoded}`, apiKey),
+    fetchTmdb<TmdbSearchResult>(`/search/tv?query=${encoded}`, apiKey),
   ]);
   const [movies, tv] = res;
   const combined = {

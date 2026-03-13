@@ -65,12 +65,18 @@ export default async function HomePage() {
         )}
       </section>
 
-      <div className="mt-12 text-center">
+      <div className="mt-12 text-center flex flex-wrap justify-center gap-4">
         <Link
-          href="/search"
+          href="/search/movies"
           className="inline-block px-6 py-2 bg-amber-500 text-zinc-950 font-medium rounded hover:bg-amber-400 transition"
         >
-          Search movies & TV
+          Search movies
+        </Link>
+        <Link
+          href="/search/tv"
+          className="inline-block px-6 py-2 bg-amber-500 text-zinc-950 font-medium rounded hover:bg-amber-400 transition"
+        >
+          Search TV shows
         </Link>
       </div>
     </div>

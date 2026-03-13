@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appendFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from "fs/promises";
+import { resolve } from "path";
+import { config } from "dotenv";
+
+const envPath = resolve(process.cwd(), ".env");
+config({ path: envPath, override: true });
+
+async function getTmdbKeyFromEnv(): Promise<string | undefined> {
+  try {
+    const content = await readFile(envPath, "utf8");
+    const match = content.match(/TMDB_API_KEY\s*=\s*(.+)/m);
+    const val = match?.[1]?.trim().replace(/^["']|["']$/g, "");
+    return val || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 import { searchTmdb } from "@/lib/tmdb";
 import { prisma } from "@/lib/prisma";
-
-const LOG_PATH = join(process.cwd(), ".cursor/debug-bc788d.log");
-async function dbg(p: Record<string, unknown>) {
-  try {
-    await appendFile(LOG_PATH, JSON.stringify({ sessionId: "bc788d", ...p, timestamp: Date.now() }) + "\n");
-  } catch {}
-}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -52,22 +61,15 @@ export async function GET(req: NextRequest) {
   }
 
   if (q && q.trim()) {
-    // #region agent log
-    await dbg({ location: "api/media/route.ts:search", message: "Search API called", data: { q: q.trim(), hasKey: !!process.env.TMDB_API_KEY }, hypothesisId: "H1" });
-    // #endregion
+    const cfg = config({ path: envPath, override: true });
+    const apiKey = cfg?.parsed?.TMDB_API_KEY ?? process.env.TMDB_API_KEY ?? (await getTmdbKeyFromEnv());
     try {
-      const result = await searchTmdb(q.trim());
+      const result = await searchTmdb(q.trim(), apiKey);
       let results = result.results;
       if (type === "movie") results = results.filter((r) => r.media_type === "movie");
       if (type === "tv") results = results.filter((r) => r.media_type === "tv");
-      // #region agent log
-      await dbg({ location: "api/media/route.ts:success", message: "Search succeeded", data: { resultCount: results?.length }, hypothesisId: "H2" });
-      // #endregion
       return NextResponse.json({ results });
     } catch (e) {
-      // #region agent log
-      await dbg({ location: "api/media/route.ts:catch", message: "Search failed", data: { error: String(e) }, hypothesisId: "H1" });
-      // #endregion
       return NextResponse.json({ error: "Search failed" }, { status: 500 });
     }
   }
