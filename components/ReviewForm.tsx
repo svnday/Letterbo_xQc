@@ -17,10 +17,20 @@ export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  function handleRatingChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    if (v === "" || /^\d*\.?\d*$/.test(v)) setScore(v);
+  }
+
+  function isValidRating(): boolean {
+    const num = parseFloat(score);
+    return !isNaN(num) && num >= 0 && num <= 10 && isFinite(num);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const numScore = parseFloat(score);
-    if (isNaN(numScore) || numScore < 0 || numScore > 10) return;
+    if (!isValidRating()) return;
     setLoading(true);
     setSuccess(false);
     try {
@@ -60,15 +70,14 @@ export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-4">
       <div>
-        <label htmlFor="score" className="block text-sm text-zinc-400 mb-2">Score (0–10)</label>
+        <label htmlFor="score" className="block text-sm text-zinc-400 mb-2">Rating (positive number, 0–10)</label>
         <input
           id="score"
-          type="number"
-          min={0}
-          max={10}
-          step={0.1}
+          type="text"
+          inputMode="decimal"
           value={score}
-          onChange={(e) => setScore(e.target.value)}
+          onChange={handleRatingChange}
+          placeholder="e.g. 7.5"
           className="w-full max-w-[120px] px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
         />
       </div>
@@ -88,7 +97,7 @@ export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
       </div>
       <button
         type="submit"
-        disabled={loading || !score || parseFloat(score) < 0 || parseFloat(score) > 10}
+        disabled={loading || !score || !isValidRating()}
         className="px-4 py-2 bg-amber-500 text-zinc-950 font-medium rounded hover:bg-amber-400 transition disabled:opacity-50"
       >
         {loading ? "Saving..." : success ? "Saved!" : "Save rating"}

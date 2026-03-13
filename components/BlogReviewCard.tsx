@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getTmdbImageUrl } from "@/lib/tmdb";
+import { DeleteReviewButton } from "./DeleteReviewButton";
 
 interface BlogReviewCardProps {
   id: string;
@@ -9,9 +10,10 @@ interface BlogReviewCardProps {
   createdAt: string;
   user: { name: string | null; username: string | null; email: string };
   media: { title: string; type: string; tmdbId: number; posterPath: string | null };
+  canDelete?: boolean;
 }
 
-export function BlogReviewCard({ rating, content, createdAt, user, media }: BlogReviewCardProps) {
+export function BlogReviewCard({ id, rating, content, createdAt, user, media, canDelete }: BlogReviewCardProps) {
   const displayName = user.name ?? user.username ?? user.email;
   const profileSlug = user.username ?? user.email;
 
@@ -38,7 +40,10 @@ export function BlogReviewCard({ rating, content, createdAt, user, media }: Blog
           >
             {media.title}
           </Link>
-          <span className="text-amber-400 font-medium">{rating}/10</span>
+          <div className="flex items-center gap-3">
+            <span className="text-amber-400 font-medium">{rating}/10</span>
+            {canDelete && <DeleteReviewButton reviewId={id} />}
+          </div>
         </div>
         <div className="flex items-center gap-2 mt-1 text-sm text-zinc-500">
           <Link

@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { ReviewCard } from "@/components/ReviewCard";
 import { MediaCard } from "@/components/MediaCard";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 
 async function getUserData(username: string) {
   const user = await prisma.user.findFirst({
@@ -31,7 +33,10 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const data = await getUserData(username);
+  const [data, session] = await Promise.all([
+    getUserData(username),
+    getServerSession(authOptions),
+  ]);
   if (!data) notFound();
 
   const { user, reviews } = data;
@@ -64,6 +69,7 @@ export default async function ProfilePage({
                   email: "",
                 }}
                 media={r.media}
+                canDelete={session?.user?.id === user.id}
               />
             ))}
           </div>

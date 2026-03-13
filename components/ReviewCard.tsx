@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeleteReviewButton } from "./DeleteReviewButton";
 
 interface ReviewCardProps {
   id: string;
@@ -7,9 +8,10 @@ interface ReviewCardProps {
   createdAt: string;
   user: { name: string | null; username: string | null; email: string };
   media?: { title: string; type: string; tmdbId: number } | null;
+  canDelete?: boolean;
 }
 
-export function ReviewCard({ rating, content, createdAt, user, media }: ReviewCardProps) {
+export function ReviewCard({ id, rating, content, createdAt, user, media, canDelete }: ReviewCardProps) {
   const displayName = user.name ?? user.username ?? user.email;
   const profileSlug = user.username ?? user.email;
 
@@ -25,9 +27,12 @@ export function ReviewCard({ rating, content, createdAt, user, media }: ReviewCa
             {displayName}
           </Link>
         </div>
-        <time className="text-zinc-500 text-sm">
-          {new Date(createdAt).toLocaleDateString()}
-        </time>
+        <div className="flex items-center gap-2">
+          <time className="text-zinc-500 text-sm">
+            {new Date(createdAt).toLocaleDateString()}
+          </time>
+          {canDelete && <DeleteReviewButton reviewId={id} />}
+        </div>
       </div>
       {media && (
         <Link

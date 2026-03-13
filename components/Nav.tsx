@@ -14,7 +14,7 @@ export function Nav() {
       <nav className="border-b border-zinc-800 bg-zinc-900/80 sticky top-0 z-50 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
           <Link href="/" className="font-bold text-xl text-amber-500">
-            Letterbo xQc
+            LetterboxQc
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/search" className="text-zinc-400 hover:text-white transition">

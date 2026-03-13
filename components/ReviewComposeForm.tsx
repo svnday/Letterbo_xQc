@@ -15,6 +15,16 @@ export function ReviewComposeForm({ onSuccess, onCancel }: ReviewComposeFormProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  function handleRatingChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    if (v === "" || /^\d*\.?\d*$/.test(v)) setScore(v);
+  }
+
+  function isValidRating(): boolean {
+    const num = parseFloat(score);
+    return !isNaN(num) && num >= 0 && num <= 10 && isFinite(num);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selected) {
@@ -22,8 +32,8 @@ export function ReviewComposeForm({ onSuccess, onCancel }: ReviewComposeFormProp
       return;
     }
     const numScore = parseFloat(score);
-    if (isNaN(numScore) || numScore < 0 || numScore > 10) {
-      setError("Score must be between 0 and 10");
+    if (!isValidRating()) {
+      setError("Rating must be a positive number (0–10)");
       return;
     }
     setError("");
@@ -67,16 +77,14 @@ export function ReviewComposeForm({ onSuccess, onCancel }: ReviewComposeFormProp
       </div>
       <div>
         <label htmlFor="score" className="block text-sm text-zinc-400 mb-2">
-          Score (0–10, decimals allowed)
+          Rating (positive number, 0–10)
         </label>
         <input
           id="score"
-          type="number"
-          min={0}
-          max={10}
-          step={0.1}
+          type="text"
+          inputMode="decimal"
           value={score}
-          onChange={(e) => setScore(e.target.value)}
+          onChange={handleRatingChange}
           placeholder="e.g. 7.5"
           className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
         />
@@ -99,7 +107,7 @@ export function ReviewComposeForm({ onSuccess, onCancel }: ReviewComposeFormProp
       <div className="flex gap-2">
         <button
           type="submit"
-          disabled={loading || !selected}
+          disabled={loading || !selected || !score || !isValidRating()}
           className="px-4 py-2 bg-amber-500 text-zinc-950 font-medium rounded hover:bg-amber-400 transition disabled:opacity-50"
         >
           {loading ? "Saving..." : "Publish review"}

@@ -1,17 +1,12 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { BlogReviewCard } from "@/components/BlogReviewCard";
 import { ComposeButton } from "@/components/ComposeButton";
 
 async function getFeedReviews() {
-  const featuredUsername = process.env.FEATURED_USERNAME ?? "xQc";
-  const user = await prisma.user.findFirst({
-    where: { username: featuredUsername },
-    select: { id: true },
-  });
-  if (!user) return [];
   const reviews = await prisma.review.findMany({
-    where: { userId: user.id },
     include: {
       user: { select: { id: true, name: true, username: true, email: true } },
       media: true,
@@ -22,13 +17,16 @@ async function getFeedReviews() {
 }
 
 export default async function HomePage() {
-  const reviews = await getFeedReviews();
+  const [reviews, session] = await Promise.all([
+    getFeedReviews(),
+    getServerSession(authOptions),
+  ]);
   const featuredUsername = process.env.FEATURED_USERNAME ?? "xQc";
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="mb-12">
-        <h1 className="text-3xl font-bold mb-2">Letterbo xQc</h1>
+        <h1 className="text-3xl font-bold mb-2">LetterboxQc</h1>
         <p className="text-zinc-400 mb-4">
           Rate and review movies and TV shows
         </p>
@@ -43,7 +41,7 @@ export default async function HomePage() {
         <h2 className="text-xl font-semibold mb-6">Reviews</h2>
         {reviews.length > 0 ? (
           <div className="space-y-6">
-            {reviews.map((r) => (
+            {reviews.map((r: (typeof reviews)[number]) => (
               <BlogReviewCard
                 key={r.id}
                 id={r.id}
@@ -57,6 +55,7 @@ export default async function HomePage() {
                   tmdbId: r.media.tmdbId,
                   posterPath: r.media.posterPath,
                 }}
+                canDelete={session?.user?.id === r.user.id}
               />
             ))}
           </div>

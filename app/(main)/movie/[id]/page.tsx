@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { getMovieById } from "@/lib/tmdb";
 import { getTmdbImageUrl } from "@/lib/tmdb";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { ReviewCard } from "@/components/ReviewCard";
 import { ReviewForm } from "@/components/ReviewForm";
 
@@ -23,9 +25,10 @@ export default async function MoviePage({
     notFound();
   }
 
-  const media = await prisma.media.findUnique({
-    where: { tmdbId: numId },
-  });
+  const [media, session] = await Promise.all([
+    prisma.media.findUnique({ where: { tmdbId: numId } }),
+    getServerSession(authOptions),
+  ]);
   const reviews = media
     ? await prisma.review.findMany({
         where: { mediaId: media.id },
@@ -91,6 +94,7 @@ export default async function MoviePage({
               content={r.content}
               createdAt={r.createdAt.toISOString()}
               user={r.user}
+              canDelete={session?.user?.id === r.user.id}
             />
           ))}
           {reviews.length === 0 && (

@@ -1,4 +1,4 @@
-# Letterbo xQc
+# LetterboxQc
 
 A Letterboxd-style site for rating and reviewing movies and TV shows.
 

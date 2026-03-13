@@ -7,7 +7,7 @@ import { Nav } from "@/components/Nav";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Letterbo xQc - Rate & Review Movies & TV",
+  title: "LetterboxQc - Rate & Review Movies & TV",
   description: "Rate and review your favorite movies and TV shows",
 };
 
