@@ -301,6 +301,13 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Next.js
+.next/
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
 # Visual Studio 6 build log
 *.plg
 
