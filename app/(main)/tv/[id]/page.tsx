@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTvById } from "@/lib/tmdb";
 import { getTmdbImageUrl } from "@/lib/tmdb";
 import { prisma } from "@/lib/prisma";
-import { RatingStars } from "@/components/RatingStars";
 import { ReviewCard } from "@/components/ReviewCard";
 import { ReviewForm } from "@/components/ReviewForm";
 
@@ -68,10 +67,8 @@ export default async function TvPage({
           </p>
           {avgRating !== null && (
             <div className="flex items-center gap-2 mt-4">
-              <RatingStars value={Math.round(avgRating)} readOnly />
-              <span className="text-zinc-400">
-                {avgRating.toFixed(1)} ({reviews.length} reviews)
-              </span>
+              <span className="text-amber-400 font-medium">{avgRating.toFixed(1)}/10</span>
+              <span className="text-zinc-400">({reviews.length} reviews)</span>
             </div>
           )}
           <p className="mt-6 text-zinc-300 leading-relaxed">{tv.overview}</p>

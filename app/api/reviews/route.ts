@@ -8,7 +8,7 @@ const createSchema = z.object({
   mediaId: z.string().optional(),
   tmdbId: z.number(),
   mediaType: z.enum(["movie", "tv"]),
-  rating: z.number().min(1).max(5),
+  rating: z.number().min(0).max(10),
   content: z.string().max(2000).optional(),
 });
 

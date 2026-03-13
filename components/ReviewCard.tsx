@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { RatingStars } from "./RatingStars";
 
 interface ReviewCardProps {
   id: string;
@@ -18,7 +17,7 @@ export function ReviewCard({ rating, content, createdAt, user, media }: ReviewCa
     <article className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <RatingStars value={rating} readOnly />
+          <span className="text-amber-400 font-medium">{rating}/10</span>
           <Link
             href={`/u/${encodeURIComponent(profileSlug)}`}
             className="text-amber-500 hover:underline font-medium"

@@ -29,9 +29,19 @@ export default function SearchPage() {
     }
     setLoading(true);
     fetch(`/api/media?q=${encodeURIComponent(debounced)}`)
-      .then((res) => res.json())
-      .then((data) => setResults(data.results ?? []))
-      .catch(() => setResults([]))
+      .then((res) => {
+        return res.json().then((data) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7618/ingest/dbeead2b-86a0-46b2-9eb4-57486b2f8048',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bc788d'},body:JSON.stringify({sessionId:'bc788d',location:'search/page.tsx:fetch',message:'Search response',data:{status:res.status,hasResults:!!data?.results,resultCount:data?.results?.length,hasError:!!data?.error},hypothesisId:'H3',timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          return { res, data };
+        });
+      })
+      .then(({ res, data }) => setResults(data.results ?? []))
+      .catch((err) => {
+        fetch('http://127.0.0.1:7618/ingest/dbeead2b-86a0-46b2-9eb4-57486b2f8048',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bc788d'},body:JSON.stringify({sessionId:'bc788d',location:'search/page.tsx:catch',message:'Fetch error',data:{error:String(err)},hypothesisId:'H4',timestamp:Date.now()})}).catch(()=>{});
+        setResults([]);
+      })
       .finally(() => setLoading(false));
   }, [debounced]);
 

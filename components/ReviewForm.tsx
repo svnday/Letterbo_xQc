@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { RatingStars } from "./RatingStars";
 
 interface ReviewFormProps {
   tmdbId: number;
@@ -13,14 +12,15 @@ interface ReviewFormProps {
 
 export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
   const { data: session, status } = useSession();
-  const [rating, setRating] = useState(0);
+  const [score, setScore] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (rating === 0) return;
+    const numScore = parseFloat(score);
+    if (isNaN(numScore) || numScore < 0 || numScore > 10) return;
     setLoading(true);
     setSuccess(false);
     try {
@@ -30,12 +30,13 @@ export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
         body: JSON.stringify({
           tmdbId,
           mediaType,
-          rating,
+          rating: numScore,
           content: content.trim() || undefined,
         }),
       });
       if (res.ok) {
         setSuccess(true);
+        setScore("");
         setContent("");
         window.location.reload();
       }
@@ -59,8 +60,17 @@ export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-4">
       <div>
-        <label className="block text-sm text-zinc-400 mb-2">Your rating</label>
-        <RatingStars value={rating} onChange={setRating} />
+        <label htmlFor="score" className="block text-sm text-zinc-400 mb-2">Score (0–10)</label>
+        <input
+          id="score"
+          type="number"
+          min={0}
+          max={10}
+          step={0.1}
+          value={score}
+          onChange={(e) => setScore(e.target.value)}
+          className="w-full max-w-[120px] px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
+        />
       </div>
       <div>
         <label htmlFor="review" className="block text-sm text-zinc-400 mb-2">
@@ -78,7 +88,7 @@ export function ReviewForm({ tmdbId, mediaType, mediaTitle }: ReviewFormProps) {
       </div>
       <button
         type="submit"
-        disabled={loading || rating === 0}
+        disabled={loading || !score || parseFloat(score) < 0 || parseFloat(score) > 10}
         className="px-4 py-2 bg-amber-500 text-zinc-950 font-medium rounded hover:bg-amber-400 transition disabled:opacity-50"
       >
         {loading ? "Saving..." : success ? "Saved!" : "Save rating"}

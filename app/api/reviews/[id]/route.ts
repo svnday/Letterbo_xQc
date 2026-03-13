@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const updateSchema = z.object({
-  rating: z.number().min(1).max(5).optional(),
+  rating: z.number().min(0).max(10).optional(),
   content: z.string().max(2000).optional(),
 });
 
