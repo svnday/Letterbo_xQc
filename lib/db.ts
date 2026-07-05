@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { unstable_cache } from "next/cache";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { drizzle as drizzleNodePg } from "drizzle-orm/node-postgres";
@@ -19,6 +20,14 @@ import {
 } from "./schema";
 
 export type { User, Session, Entry, MediaType, EntryStatus };
+
+/**
+ * Cache tag for all publicly served review data. Reads of the owner and
+ * their entries are cached under this tag; the owner's save/delete actions
+ * revalidate it, so readers get cached data that updates the moment a
+ * review is posted.
+ */
+export const PUBLIC_CACHE_TAG = "public-reviews";
 
 /**
  * Storage: Drizzle ORM speaking Postgres.
@@ -158,8 +167,7 @@ export async function createUser(user: User): Promise<void> {
   await db().insert(users).values(user);
 }
 
-/** The site owner — the one person whose reviews are published here. */
-export async function getOwner(): Promise<User | null> {
+async function getOwnerUncached(): Promise<User | null> {
   await ready();
   const flagged = await db()
     .select()
@@ -174,6 +182,17 @@ export async function getOwner(): Promise<User | null> {
     .limit(1);
   return oldest[0] ?? null;
 }
+
+/**
+ * The site owner — the one person whose reviews are published here.
+ * Cached: served from the data cache for public traffic; invalidated by
+ * PUBLIC_CACHE_TAG when the owner posts, with a periodic fallback so
+ * out-of-band changes (admin scripts) surface within minutes.
+ */
+export const getOwner = unstable_cache(getOwnerUncached, ["owner"], {
+  tags: [PUBLIC_CACHE_TAG],
+  revalidate: 300,
+});
 
 /* ---------- sessions ---------- */
 
@@ -203,25 +222,32 @@ export async function removeSession(token: string): Promise<void> {
 
 /* ---------- entries ---------- */
 
-/** The owner's entries, i.e. the site's public content. */
-export async function publicEntries(): Promise<Entry[]> {
-  const owner = await getOwner();
-  if (!owner) return [];
-  await ready();
-  return db().select().from(entries).where(eq(entries.userId, owner.id));
-}
+/** The owner's entries, i.e. the site's public content. Cached (see getOwner). */
+export const publicEntries = unstable_cache(
+  async (): Promise<Entry[]> => {
+    const owner = await getOwnerUncached();
+    if (!owner) return [];
+    return db().select().from(entries).where(eq(entries.userId, owner.id));
+  },
+  ["public-entries"],
+  { tags: [PUBLIC_CACHE_TAG], revalidate: 300 }
+);
 
-/** A single published (owner-authored) entry. */
-export async function getPublicEntry(id: string): Promise<Entry | null> {
-  const owner = await getOwner();
-  if (!owner) return null;
-  const rows = await db()
-    .select()
-    .from(entries)
-    .where(and(eq(entries.id, id), eq(entries.userId, owner.id)))
-    .limit(1);
-  return rows[0] ?? null;
-}
+/** A single published (owner-authored) entry. Cached per id (see getOwner). */
+export const getPublicEntry = unstable_cache(
+  async (id: string): Promise<Entry | null> => {
+    const owner = await getOwnerUncached();
+    if (!owner) return null;
+    const rows = await db()
+      .select()
+      .from(entries)
+      .where(and(eq(entries.id, id), eq(entries.userId, owner.id)))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+  ["public-entry"],
+  { tags: [PUBLIC_CACHE_TAG], revalidate: 300 }
+);
 
 export async function getOwnedEntry(
   id: string,

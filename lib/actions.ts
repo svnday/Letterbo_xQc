@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import {
@@ -12,6 +12,7 @@ import {
   insertEntry,
   removeEntry,
   updateEntry,
+  PUBLIC_CACHE_TAG,
   type EntryStatus,
   type MediaType,
 } from "./db";
@@ -56,6 +57,7 @@ export async function signUp(formData: FormData): Promise<void> {
     createdAt: new Date().toISOString(),
   };
   await createUser(user);
+  if (user.isOwner) revalidateTag(PUBLIC_CACHE_TAG);
 
   await createSession(user.id);
   redirect("/");
@@ -148,6 +150,7 @@ export async function saveEntry(formData: FormData): Promise<void> {
     });
   }
 
+  revalidateTag(PUBLIC_CACHE_TAG);
   revalidatePath("/");
   redirect(toWatchlist ? "/watchlist" : `/entry/${entryId}`);
 }
@@ -155,6 +158,7 @@ export async function saveEntry(formData: FormData): Promise<void> {
 export async function deleteEntry(id: string): Promise<void> {
   const user = await requireOwner();
   await removeEntry(id, user.id);
+  revalidateTag(PUBLIC_CACHE_TAG);
   revalidatePath("/");
   redirect("/");
 }
