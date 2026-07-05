@@ -9,6 +9,7 @@
     "create-owner": "node scripts/create-owner.mjs",
     "set-password": "node scripts/set-password.mjs",
     "delete-user": "node scripts/delete-user.mjs",
+    "rename-user": "node scripts/rename-user.mjs",
     "push-data": "node scripts/copy-local-to-remote.mjs"
   },
   "dependencies": {
