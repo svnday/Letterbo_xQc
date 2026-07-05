@@ -8,7 +8,8 @@
     "start": "next start",
     "create-owner": "node scripts/create-owner.mjs",
     "set-password": "node scripts/set-password.mjs",
-    "delete-user": "node scripts/delete-user.mjs"
+    "delete-user": "node scripts/delete-user.mjs",
+    "push-data": "node scripts/copy-local-to-remote.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
