@@ -106,6 +106,8 @@ export default function EntryForm({
   );
   const today = new Date().toISOString().slice(0, 10);
   const posterUrl = entry?.posterUrl ?? prefill?.posterUrl ?? "";
+  // Picked from TMDB — the medium is a fact of the title, not a choice.
+  const typeLocked = Boolean(prefill?.tmdbId ?? entry?.tmdbId);
 
   return (
     <form action={saveEntry}>
@@ -142,23 +144,35 @@ export default function EntryForm({
 
         <div className="space-y-5">
 
-      {/* Movie / TV toggle */}
-      <div className="inline-flex overflow-hidden rounded border border-line">
-        {(["movie", "tv"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setType(t)}
-            className={`px-5 py-2 text-sm font-bold uppercase tracking-wide transition-colors ${
-              type === t
-                ? "bg-lbgreen text-[#14181c]"
-                : "bg-panel text-dim hover:text-white"
-            }`}
-          >
-            {t === "movie" ? "Film" : "TV Show"}
-          </button>
-        ))}
-      </div>
+      {typeLocked ? (
+        <span
+          className={`inline-block rounded px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+            type === "tv"
+              ? "bg-lbblue/15 text-lbblue"
+              : "bg-lborange/15 text-lborange"
+          }`}
+        >
+          {type === "tv" ? "TV Series" : "Film"}
+        </span>
+      ) : (
+        /* Manual entry — the medium wasn't established by search, so ask. */
+        <div className="inline-flex overflow-hidden rounded border border-line">
+          {(["movie", "tv"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setType(t)}
+              className={`px-5 py-2 text-sm font-bold uppercase tracking-wide transition-colors ${
+                type === t
+                  ? "bg-lbgreen text-[#14181c]"
+                  : "bg-panel text-dim hover:text-white"
+              }`}
+            >
+              {t === "movie" ? "Film" : "TV Show"}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
         <label className="block">
