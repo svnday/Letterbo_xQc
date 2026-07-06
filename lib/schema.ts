@@ -45,6 +45,13 @@ export const entries = pgTable("entries", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const loginAttempts = pgTable("login_attempts", {
+  id: text("id").primaryKey(),
+  username: text("username").notNull(),
+  ip: text("ip").notNull(),
+  at: text("at").notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Entry = typeof entries.$inferSelect;

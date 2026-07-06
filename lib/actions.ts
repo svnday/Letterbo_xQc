@@ -5,11 +5,14 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import {
+  clearLoginFailures,
+  countRecentLoginFailures,
   countUsers,
   createUser,
   getOwnedEntry,
   getUserByUsername,
   insertEntry,
+  recordLoginFailure,
   removeEntry,
   updateEntry,
   PUBLIC_CACHE_TAG,
@@ -63,6 +66,10 @@ export async function signUp(formData: FormData): Promise<void> {
   redirect("/");
 }
 
+const LOCKOUT_WINDOW_MS = 15 * 60_000;
+const MAX_FAILURES_PER_USER = 5;
+const MAX_FAILURES_PER_IP = 20;
+
 export async function signIn(formData: FormData): Promise<void> {
   const ip = await clientIp();
   if (!allow(`signin:${ip}`, 5, 60_000))
@@ -71,10 +78,23 @@ export async function signIn(formData: FormData): Promise<void> {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  const user = await getUserByUsername(username);
-  if (!user || !(await bcrypt.compare(password, user.passwordHash)))
-    fail("/signin", "Incorrect username or password.");
+  // Durable, DB-backed lockout: holds across serverless instances, so a
+  // distributed guessing campaign against a known username hits a wall.
+  const { forUser, forIp } = await countRecentLoginFailures(
+    username,
+    ip,
+    LOCKOUT_WINDOW_MS
+  );
+  if (forUser >= MAX_FAILURES_PER_USER || forIp >= MAX_FAILURES_PER_IP)
+    fail("/signin", "Too many failed attempts. Try again in 15 minutes.");
 
+  const user = await getUserByUsername(username);
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    await recordLoginFailure(username, ip);
+    fail("/signin", "Incorrect username or password.");
+  }
+
+  await clearLoginFailures(username);
   await createSession(user.id);
   redirect("/");
 }
@@ -103,6 +123,11 @@ export async function saveEntry(formData: FormData): Promise<void> {
 
   const year = String(formData.get("year") ?? "").trim();
   let posterUrl = String(formData.get("posterUrl") ?? "").trim();
+  if (posterUrl && !/^https?:\/\//i.test(posterUrl))
+    fail(
+      id ? `/log?id=${id}` : "/log",
+      "Poster URL must start with http:// or https://."
+    );
   let lookedUpId: number | null = null;
 
   // No poster given? Try to fetch the official one automatically.

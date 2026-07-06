@@ -5,13 +5,15 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { drizzle as drizzleNodePg } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { and, asc, eq, lte } from "drizzle-orm";
+import crypto from "crypto";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
 // plain-JS module so the admin scripts (scripts/*.mjs) can share it
 import { DDL } from "./ddl.mjs";
 import {
   users,
   sessions,
   entries,
+  loginAttempts,
   type User,
   type Session,
   type Entry,
@@ -218,6 +220,50 @@ export async function findSession(token: string): Promise<Session | null> {
 export async function removeSession(token: string): Promise<void> {
   await ready();
   await db().delete(sessions).where(eq(sessions.token, token));
+}
+
+/* ---------- login attempt tracking (brute-force lockout) ----------
+ * Persisted in the database so the limits hold across serverless
+ * instances, unlike the in-memory limiter in lib/ratelimit.ts which is
+ * only a cheap first line of defense. */
+
+export async function countRecentLoginFailures(
+  username: string,
+  ip: string,
+  windowMs: number
+): Promise<{ forUser: number; forIp: number }> {
+  await ready();
+  const since = new Date(Date.now() - windowMs).toISOString();
+  const recent = await db()
+    .select()
+    .from(loginAttempts)
+    .where(gte(loginAttempts.at, since));
+  return {
+    forUser: recent.filter((a) => a.username === username).length,
+    forIp: recent.filter((a) => a.ip === ip).length,
+  };
+}
+
+export async function recordLoginFailure(
+  username: string,
+  ip: string
+): Promise<void> {
+  await ready();
+  // keep the table tiny: drop anything older than a day
+  await db()
+    .delete(loginAttempts)
+    .where(lte(loginAttempts.at, new Date(Date.now() - 86_400_000).toISOString()));
+  await db().insert(loginAttempts).values({
+    id: crypto.randomUUID(),
+    username,
+    ip,
+    at: new Date().toISOString(),
+  });
+}
+
+export async function clearLoginFailures(username: string): Promise<void> {
+  await ready();
+  await db().delete(loginAttempts).where(eq(loginAttempts.username, username));
 }
 
 /* ---------- entries ---------- */
