@@ -42,8 +42,12 @@ export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   let external: Awaited<ReturnType<typeof searchExternal>> = [];
   if (user?.isOwner && searchConfigured()) {
-    external = (await searchExternal(q)).slice(0, 6);
+    external = (await searchExternal(q)).slice(0, 8);
   }
 
-  return NextResponse.json({ library, external });
+  return NextResponse.json({
+    library,
+    external,
+    externalConfigured: user?.isOwner ? searchConfigured() : false,
+  });
 }
