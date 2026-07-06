@@ -44,10 +44,25 @@ local store — PGlite allows one process at a time). They also work against
 `DATABASE_URL` when it's set.
 
 ```bash
-npm run create-owner -- <username> <password> [displayName]  # create/promote the site owner
+npm run create-owner -- <username> <password> [displayName]  # create the reviewer account (sets password)
+npm run promote-user -- <username>                           # make an existing account the featured reviewer
 npm run set-password -- <username> <newPassword>             # reset a password
+npm run rename-user  -- <username> <newUsername>             # change a sign-in / byline name
+npm run set-display-name -- <username> <name>                # change the public display name
 npm run delete-user  -- <username>                           # remove a viewer account
 ```
+
+## Handing the site to its reviewer
+
+The homepage publishes whichever account holds the featured-reviewer flag.
+To hand the site over (e.g. the admin set it up, the personality reviews):
+
+1. Set `SIGNUPS_OPEN=true` (in Vercel env for production) so they can register.
+2. They sign up with their own username and password.
+3. `DATABASE_URL=... npm run promote-user -- <their username>` — the homepage
+   becomes their feed (allow up to 5 minutes for caches). Their password is
+   untouched, and the previous reviewer's entries leave the public site.
+4. Set `SIGNUPS_OPEN=false` again to close registration.
 
 ## Launch checklist
 

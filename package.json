@@ -10,6 +10,7 @@
     "set-password": "node scripts/set-password.mjs",
     "delete-user": "node scripts/delete-user.mjs",
     "rename-user": "node scripts/rename-user.mjs",
+    "promote-user": "node scripts/promote-user.mjs",
     "set-display-name": "node scripts/set-display-name.mjs",
     "push-data": "node scripts/copy-local-to-remote.mjs"
   },
