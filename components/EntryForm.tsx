@@ -105,20 +105,42 @@ export default function EntryForm({
     entry?.type ?? prefill?.type ?? "movie"
   );
   const today = new Date().toISOString().slice(0, 10);
+  const posterUrl = entry?.posterUrl ?? prefill?.posterUrl ?? "";
 
   return (
-    <form action={saveEntry} className="space-y-5">
+    <form action={saveEntry}>
       {entry && <input type="hidden" name="id" value={entry.id} />}
       {prefill?.tmdbId && (
         <input type="hidden" name="tmdbId" value={prefill.tmdbId} />
       )}
       <input type="hidden" name="type" value={type} />
+      <input type="hidden" name="posterUrl" value={posterUrl} />
 
       {error && (
-        <p className="rounded border border-lborange/40 bg-lborange/10 px-3 py-2 text-sm text-lborange">
+        <p className="mb-5 rounded border border-lborange/40 bg-lborange/10 px-3 py-2 text-sm text-lborange">
           {error}
         </p>
       )}
+
+      <div className="grid gap-8 sm:grid-cols-[150px_1fr]">
+        <aside>
+          <div className="poster-frame aspect-[2/3] w-32 bg-card sm:w-full">
+            {posterUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={posterUrl}
+                alt="Poster"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center p-3 text-center text-xs leading-relaxed text-dim">
+                Poster art is found automatically when you save
+              </div>
+            )}
+          </div>
+        </aside>
+
+        <div className="space-y-5">
 
       {/* Movie / TV toggle */}
       <div className="inline-flex overflow-hidden rounded border border-line">
@@ -178,29 +200,16 @@ export default function EntryForm({
         </label>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-dim">
-            Watched on
-          </span>
-          <input
-            type="date"
-            name="watchedDate"
-            defaultValue={entry?.watchedDate ?? today}
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-dim">
-            Poster URL <span className="normal-case text-dim/60">(optional)</span>
-          </span>
-          <input
-            type="url"
-            name="posterUrl"
-            defaultValue={entry?.posterUrl ?? prefill?.posterUrl ?? ""}
-            placeholder="https://…"
-          />
-        </label>
-      </div>
+      <label className="block sm:w-1/2">
+        <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-dim">
+          Watched on
+        </span>
+        <input
+          type="date"
+          name="watchedDate"
+          defaultValue={entry?.watchedDate ?? today}
+        />
+      </label>
 
       <div>
         <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-dim">
@@ -251,6 +260,8 @@ export default function EntryForm({
         >
           {entry ? "SAVE CHANGES" : "SAVE"}
         </button>
+      </div>
+        </div>
       </div>
     </form>
   );
