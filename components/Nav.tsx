@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/lib/actions";
+import LiveSearch from "./LiveSearch";
 
 function Dots() {
   return (
@@ -36,14 +37,9 @@ export default function Nav({
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          <form action="/search" className="hidden md:block">
-            <input
-              type="text"
-              name="q"
-              placeholder="Search…"
-              className="!w-44 !rounded-full !bg-card !py-1.5 text-sm"
-            />
-          </form>
+          <div className="hidden md:block">
+            <LiveSearch variant="nav" />
+          </div>
 
           {user?.isOwner && (
             <Link

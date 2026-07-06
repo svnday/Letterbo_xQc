@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { publicEntries } from "@/lib/db";
 import { searchConfigured, searchExternal } from "@/lib/tmdb";
 import PosterCard from "@/components/PosterCard";
+import LiveSearch from "@/components/LiveSearch";
 
 export default async function SearchPage({
   searchParams,
@@ -27,16 +28,9 @@ export default async function SearchPage({
 
   return (
     <div className="py-10">
-      <form action="/search" className="mb-8">
-        <input
-          type="text"
-          name="q"
-          defaultValue={query}
-          autoFocus
-          placeholder="Search films and TV shows…"
-          className="!py-3 !text-lg"
-        />
-      </form>
+      <div className="mb-8">
+        <LiveSearch variant="page" initialQuery={query} autoFocus />
+      </div>
 
       {query && (
         <>
